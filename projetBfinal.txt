@@ -1,0 +1,170 @@
+SQL> CREATE SEQUENCE faculty_seq START WITH 1;
+
+Séquence créée.
+
+SQL> CREATE SEQUENCE student_seq START WITH 1;
+
+Séquence créée.
+
+SQL> CREATE SEQUENCE course_seq START WITH 1;
+
+Séquence créée.
+
+SQL> CREATE SEQUENCE enrollment_seq START WITH 1;
+
+Séquence créée.
+
+SQL> CREATE TABLE student (
+  2      s_id NUMBER PRIMARY KEY,
+  3      s_first VARCHAR2(50),
+  4      s_last VARCHAR2(50)
+  5  );
+
+Table créée.
+
+SQL> CREATE TABLE faculty (
+  2      f_id NUMBER PRIMARY KEY,
+  3      f_first VARCHAR2(50),
+  4      f_last VARCHAR2(50)
+  5  );
+
+Table créée.
+
+SQL> CREATE TABLE course (
+  2      course_id NUMBER PRIMARY KEY,
+  3      course_name VARCHAR2(100)
+  4  );
+
+Table créée.
+
+SQL> CREATE TABLE enrollment (
+  2      s_id NUMBER REFERENCES student(s_id),
+  3      c_sec_id NUMBER,
+  4      grade VARCHAR2(3),
+  5      PRIMARY KEY (s_id, c_sec_id)
+  6  );
+
+Table créée.
+
+SQL> CREATE OR REPLACE PROCEDURE insert_student(p_first VARCHAR2, p_last VARCHAR2) AS
+  2      v_id NUMBER;
+  3  BEGIN
+  4  
+  5      v_id := student_seq.NEXTVAL;
+  6  
+  7      INSERT INTO student(s_id, s_first, s_last)
+  8      VALUES(v_id, p_first, p_last);
+  9  
+ 10      DBMS_OUTPUT.PUT_LINE('tudiant ins‚r‚ : ' || v_id);
+ 11  END;
+ 12  /
+
+Procédure créée.
+
+SQL> CREATE OR REPLACE PROCEDURE get_student_info(p_s_id NUMBER) AS
+  2      v_first student.s_first%TYPE;
+  3      v_last  student.s_last%TYPE;
+  4  BEGIN
+  5      SELECT s_first, s_last
+  6      INTO v_first, v_last
+  7      FROM student
+  8      WHERE s_id = p_s_id;
+  9  
+ 10      DBMS_OUTPUT.PUT_LINE('tudiant : ' || v_first || ' ' || v_last);
+ 11  EXCEPTION
+ 12      WHEN NO_DATA_FOUND THEN
+ 13          DBMS_OUTPUT.PUT_LINE('Aucun ‚tudiant trouv‚.');
+ 14  END;
+ 15  /
+
+Procédure créée.
+
+SQL> CREATE OR REPLACE FUNCTION faculty_experience(p_hiredate DATE)
+  2  RETURN NUMBER AS
+  3  BEGIN
+  4      RETURN FLOOR((SYSDATE - p_hiredate) / 365);
+  5  END;
+  6  /
+
+Fonction créée.
+
+SQL> BEGIN
+  2      FOR s IN (SELECT s_id, s_first, s_last FROM student) LOOP
+  3          DBMS_OUTPUT.PUT_LINE('tudiant : ' || s.s_first || ' ' || s.s_last);
+  4      END LOOP;
+  5  END;
+  6  /
+
+Procédure PL/SQL terminée avec succès.
+
+SQL> CREATE OR REPLACE PROCEDURE show_student_by_id(p_s_id NUMBER) AS
+  2  BEGIN
+  3      FOR s IN (SELECT s_id, s_first, s_last
+  4                FROM student
+  5                WHERE s_id = p_s_id) LOOP
+  6          DBMS_OUTPUT.PUT_LINE('tudiant : ' || s.s_first || ' ' || s.s_last);
+  7      END LOOP;
+  8  END;
+  9  /
+
+Procédure créée.
+
+SQL> CREATE OR REPLACE PACKAGE school_package IS
+  2      global_s_id NUMBER;
+  3      PROCEDURE insert_student_pkg(p_first VARCHAR2, p_last VARCHAR2);
+  4  END;
+  5  /
+
+Package créé.
+
+SQL> CREATE OR REPLACE PACKAGE BODY school_package IS
+  2      PROCEDURE insert_student_pkg(p_first VARCHAR2, p_last VARCHAR2) IS
+  3      BEGIN
+  4          global_s_id := student_seq.NEXTVAL;
+  5          INSERT INTO student(s_id, s_first, s_last)
+  6          VALUES(global_s_id, p_first, p_last);
+  7      END;
+  8  END;
+  9  /
+
+Corps de package créé.
+
+SQL> CREATE OR REPLACE TRIGGER enrollment_audit_trigger
+  2  AFTER INSERT OR UPDATE OR DELETE ON enrollment
+  3  FOR EACH ROW
+  4  BEGIN
+  5      DBMS_OUTPUT.PUT_LINE('Modification dans enrollment');
+  6  END;
+  7  /
+
+Déclencheur créé.
+
+SQL> CREATE OR REPLACE PROCEDURE insert_student_full(p_first VARCHAR2, p_last VARCHAR2) AS
+  2  BEGIN
+  3      insert_student(p_first, p_last); -- R‚utilisation de la proc‚dure existante
+  4  END;
+  5  /
+
+Procédure créée.
+
+SQL> CREATE OR REPLACE PROCEDURE check_student_existence(p_s_id NUMBER) AS
+  2      v_first student.s_first%TYPE;
+  3      v_last  student.s_last%TYPE;
+  4      e_not_found EXCEPTION;
+  5  BEGIN
+  6      SELECT s_first, s_last INTO v_first, v_last
+  7      FROM student
+  8      WHERE s_id = p_s_id;
+  9  
+ 10      DBMS_OUTPUT.PUT_LINE('tudiant : ' || v_first || ' ' || v_last);
+ 11  EXCEPTION
+ 12      WHEN NO_DATA_FOUND THEN
+ 13          RAISE e_not_found;
+ 14      WHEN e_not_found THEN
+ 15          DBMS_OUTPUT.PUT_LINE('Aucun ‚tudiant trouv‚ avec cet ID.');
+ 16  END;
+ 17  /
+
+Procédure créée.
+
+SQL> SPOOL OFF
